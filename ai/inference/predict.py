@@ -5,7 +5,8 @@ VERINOTE
 Module : Single Image Prediction
 
 Purpose:
-Predicts whether a currency note is Real or Fake.
+Predicts whether a currency note is Real or Fake
+using the trained MobileNetV2 model.
 
 Author : Tanisha Chekkilla
 ---------------------------------------------------------
@@ -26,52 +27,125 @@ if str(PROJECT_ROOT) not in sys.path:
 
 MODEL_PATH = PROJECT_ROOT / "models" / "best_model.keras"
 
-
 IMAGE_SIZE = (224, 224)
 
+CLASS_NAMES = [
+    "Fake",
+    "Real"
+]
 
-model = tf.keras.models.load_model(MODEL_PATH)
 
+# ---------------------------------------------------------
+# LOAD TRAINED MODEL
+# ---------------------------------------------------------
+
+model = tf.keras.models.load_model(
+    MODEL_PATH
+)
+
+
+# ---------------------------------------------------------
+# PREDICT SINGLE IMAGE
+# ---------------------------------------------------------
 
 def predict(image_path):
 
+    # Load image
     image = tf.keras.utils.load_img(
         image_path,
         target_size=IMAGE_SIZE
     )
 
-    image = tf.keras.utils.img_to_array(image)
 
-    image = np.expand_dims(image, axis=0)
-
-    image = tf.keras.applications.mobilenet_v2.preprocess_input(image)
-
-    prediction = float(model.predict(image, verbose=0)[0][0])
-
-    if prediction >= 0.5:
-        label = "Real"
-        confidence = prediction * 100
-    else:
-        label = "Fake"
-        confidence = (1 - prediction) * 100
-
-    return {
-        "prediction": label,
-        "confidence": round(confidence, 2),
-        "raw_prediction": round(prediction, 6)
-    }
+    # Convert image to NumPy array
+    image = tf.keras.utils.img_to_array(
+        image
+    )
 
 
-if __name__ == "__main__":
+    # Add batch dimension
+    image = np.expand_dims(
+        image,
+        axis=0
+    )
 
-    image_path = input("\nEnter image path : ").strip()
 
-    result = predict(image_path)
+    # -----------------------------------------------------
+    # MODEL PREDICTION
+    # -----------------------------------------------------
 
-    print("=" * 60)
+    probabilities = model.predict(
+        image,
+        verbose=0
+    )[0]
+
+
+    # -----------------------------------------------------
+    # SELECT CLASS USING HIGHEST PROBABILITY
+    # -----------------------------------------------------
+
+    predicted_index = int(
+        np.argmax(probabilities)
+    )
+
+
+    predicted_class = CLASS_NAMES[
+        predicted_index
+    ]
+
+
+    confidence = float(
+        probabilities[predicted_index] * 100
+    )
+
+
+    # -----------------------------------------------------
+    # DISPLAY RESULTS
+    # -----------------------------------------------------
+
+    print("\n" + "=" * 60)
     print("VERINOTE PREDICTION")
     print("=" * 60)
 
-    print(f"\nPrediction : {result['prediction']}")
-    print(f"Confidence : {result['confidence']}%")
-    print(f"Raw Score  : {result['raw_prediction']}")
+
+    print(
+        f"\nPrediction : {predicted_class}"
+    )
+
+
+    print(
+        f"Confidence : {confidence:.2f}%"
+    )
+
+
+    print("\nClass Probabilities:")
+
+
+    for index, class_name in enumerate(CLASS_NAMES):
+
+        print(
+            f"{class_name} : "
+            f"{probabilities[index] * 100:.2f}%"
+        )
+
+
+    print("=" * 60)
+
+
+    return predicted_class, confidence
+
+
+# ---------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------
+
+if __name__ == "__main__":
+
+    image_path = input(
+        "\nEnter image path : "
+    ).strip()
+
+
+    predict(
+        image_path
+    )

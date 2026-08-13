@@ -5,8 +5,7 @@ VERINOTE
 Module : MobileNetV2 Model
 
 Purpose:
-Builds the Deep Learning model for
-counterfeit currency detection.
+Builds the MobileNetV2-based binary classification model.
 
 Author : Tanisha Chekkilla
 ---------------------------------------------------------
@@ -26,29 +25,48 @@ def build_model():
         weights="imagenet"
     )
 
-    # Freeze pretrained layers
+    # Freeze pretrained layers except the last 30 layers
     base_model.trainable = True
 
     for layer in base_model.layers[:-30]:
         layer.trainable = False
 
-    inputs = tf.keras.Input(shape=IMAGE_SIZE + (3,))
+    # Input
+    inputs = tf.keras.Input(
+        shape=IMAGE_SIZE + (3,)
+    )
 
+    # Data augmentation
     x = data_augmentation(inputs)
 
+    # MobileNetV2 preprocessing
     x = tf.keras.applications.mobilenet_v2.preprocess_input(x)
 
-    x = base_model(x, training=False)
+    # Feature extraction
+    x = base_model(
+        x,
+        training=False
+    )
 
+    # Global feature representation
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
 
-    x = tf.keras.layers.Dropout(DROPOUT_RATE)(x)
-
-    outputs = tf.keras.layers.Dense(
-        1,
-        activation="sigmoid"
+    # Regularization
+    x = tf.keras.layers.Dropout(
+        DROPOUT_RATE
     )(x)
 
-    model = tf.keras.Model(inputs, outputs)
+    # Two-class output:
+    # 0 = Fake
+    # 1 = Real
+    outputs = tf.keras.layers.Dense(
+        2,
+        activation="softmax"
+    )(x)
+
+    model = tf.keras.Model(
+        inputs,
+        outputs
+    )
 
     return model
