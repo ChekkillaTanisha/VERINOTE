@@ -1,0 +1,8 @@
+============================================================
+DUPLICATE IMAGE REPORT
+============================================================
+
+Total Images Checked : 7168
+Duplicate Images Found : 0
+
+No duplicate images found.

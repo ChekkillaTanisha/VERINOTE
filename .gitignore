@@ -5,3 +5,18 @@ db.sqlite3
 .env
 .idea/
 .vscode/
+
+# Datasets
+data/
+datasets/
+
+# Uploaded/test images
+uploads/
+test_images/
+
+# Large generated model files
+*.h5
+*.keras
+*.pth
+*.pt
+*.onnx
